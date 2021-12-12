@@ -19,6 +19,15 @@ Board::Board(){
   
 void Board::startOTA()
 {
+  // Show status Blue
+  rgb rgbBuffer[NUMPIXELS];
+  for (int n=0; n < NUMPIXELS; n++)
+  {
+      rgb b = Tools::RGB(0.0f, 0.0f, 0.1f);
+      rgbBuffer[n] = b; 
+  }
+  updatePixels(rgbBuffer);
+
  // Setup OTA Server
   Serial.println("Starting OTA Server");
   WiFi.mode(WIFI_STA);
@@ -28,6 +37,9 @@ void Board::startOTA()
     delay(5000);
     ESP.restart();
   }
+
+
+
   // ArduinoOTA.setPort(3232);
   ArduinoOTA.setHostname("shotroulette");
 
@@ -48,12 +60,15 @@ void Board::startOTA()
 
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
       Serial.println("Start updating " + type);
+
+      
     })
     .onEnd([]() {
       Serial.println("\nEnd");
     })
     .onProgress([](unsigned int progress, unsigned int total) {
       Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+      Serial.println();
     })
     .onError([](ota_error_t error) {
       Serial.printf("Error[%u]: ", error);
@@ -65,6 +80,7 @@ void Board::startOTA()
     });
 
   ArduinoOTA.begin();
+
 
   Serial.println("Ready");
   Serial.print("IP address: ");
@@ -111,6 +127,7 @@ Event Board::updateInputs()
   ArduinoOTA.handle();
 
   Event ev = EV_NOTHING;
+  unsigned long time = millis();
 
   // Get Rot Encoder Diff
   static int32_t encoderCountOld = 0;
@@ -119,17 +136,16 @@ Event Board::updateInputs()
   encoderCountOld = count;
 
   // Get Rot Encoder speed
-  static unsigned long time_old;
+  static unsigned long rotSpeedTimeOld;
   static int posSpeed;
-  unsigned long time;
+  
   posSpeed += rotDiff; 
-  time = millis();
-
-  if (time - time_old > 50)
+  
+  if (time - rotSpeedTimeOld > 50)
   {
     rotSpeed = posSpeed;
     posSpeed = 0;
-    time_old = time;
+    rotSpeedTimeOld = time;
   }
   
   
@@ -151,54 +167,45 @@ Event Board::updateInputs()
     posNav = 0;
   }
 
-   /*
+  //Serial.println(touchRead(PINUSERBUTTON0));
+
   // User Button
-  bool btn0;
-  int tShort = 100; // Time for Short Press
-  int tLong = 500; // Time for Long Press
-  static int tPress;
-  
+  static float sensorAverage = 20.0f;
+  uint16_t sensorValue = touchRead(PINUSERBUTTON0);
+  sensorAverage = 0.0002 * sensorValue + 0.9998 * sensorAverage;
+
+  int threshold = (int)(0.80 * sensorAverage);
+ 
+  bool btn0 = sensorValue < threshold;
+  int tShort = 20; // Time for Short Press
+  int tLong = 1000; // Time for Long Press
+  static int tPress = 0;
+  static bool pressed = false; // Button already was pressed
+
+
   if (btn0)
   {
     tPress += 1;
-    if (tPress > tLong)
+    if ((tPress > tLong) && !pressed)
     {
       ev = EV_INPUT_BTN_LONG;
+      Serial.println("BTN LONG");
       tPress = 0;
+      pressed = true;
     }
   } 
-  else if (tPress > tShort)
+  else if ((tPress > tShort) && !pressed)
   {
     ev = EV_INPUT_BTN;
     tPress = 0;
+    Serial.println("BTN SHORT");
   }
   else
   {
     tPress = 0;
+    pressed = false;
   }
   
-
-  // Temporary Btns Cap Sensor
-  static unsigned long csSum = 0;
-  long cs = userBtn0CapSens.capacitiveSensor(80); //a: Sensor resolution is set to 80
-  if ((cs > 200) && rotSpeed == 0) { //b: Arbitrary number
-    csSum += cs;
-    //Serial.println(cs); 
-    if (csSum >= 10000) //c: This value is the threshold, a High value means it takes longer to trigger
-    {
-      ev = EV_INPUT_BTN_LONG;
-      Serial.print("User Btn Long ");
-      Serial.println(csSum);
-      if (csSum > 0) { csSum = 0; } 
-      userBtn0CapSens.reset_CS_AutoCal(); //Stops readings
-    }
-  }
-  else
-  {
-    ev = EV_NOTHING;
-    csSum = 0; //Timeout caused by bad readings
-  }
-  */
   return ev;
 }
   

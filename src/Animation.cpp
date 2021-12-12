@@ -13,10 +13,38 @@ Animation::Animation()
 {
 }
 
-Event Animation::run(GameState gs, Board board, GameLogic game)
+void Animation::init()
+{
+ // Initial Player Colors
+    #if MAXPLAYERS >= 1
+        playerColors[0] = Tools::RGB(0.0f, 0.1f, 0.7f);
+    #endif
+    #if MAXPLAYERS >= 2
+        playerColors[1] = Tools::RGB(0.1f, 0.7f, 0.1f);
+    #endif
+    #if MAXPLAYERS >= 3
+        playerColors[2] = Tools::RGB(0.7f, 0.1f, 0.0f);
+    #endif
+    #if MAXPLAYERS >= 4
+        playerColors[3] = Tools::RGB(1.0f, 0.0f, 1.0f);
+    #endif
+    #if MAXPLAYERS >= 5
+        playerColors[4] = Tools::RGB(1.0f, 1.0f, 0.0f);
+    #endif
+    #if MAXPLAYERS >= 6
+        playerColors[5] = Tools::RGB(0.4f, 0.6f, 0.1f);
+    #endif
+    #if MAXPLAYERS >= 7
+        playerColors[6] = Tools::RGB(0.0f, 0.9f, 0.7f);
+    #endif
+    #if MAXPLAYERS >= 8
+        playerColors[7] = Tools::RGB(1.0f, 1.0f, 0.7f);
+    #endif
+}
+
+Event Animation::run(Event ev, GameState gs, Board board, GameLogic game)
 {   
     static GameState gs_old;
-    Event ev;
     t += 1; 
     t_bg += 1;
 
@@ -37,36 +65,48 @@ Event Animation::run(GameState gs, Board board, GameLogic game)
     switch (gs) {
     case GS_BOOT:
 
-        ev = an_boot_0(board, game);
+        ev = an_boot_0(ev, board, game);
 
     break;
 
     case GS_PLAYERCOUNT_SELECT:
 
-        ev = an_playercount_0(board, game);
+        ev = an_playercount_0(ev, board, game);
+
+    break;
+
+    case GS_PLAYERCOLORS:
+
+        ev = an_playercolor_0(ev, board, game);
 
     break;
 
     case GS_READY:
         
-        ev = an_ready_0(board, game);
+        ev = an_ready_0(ev, board, game);
         
     break;
 
     case GS_SPINNING:
     
-      ev = an_spinning_0(board, game);
+      ev = an_spinning_0(ev, board, game);
 
     break;
 
     case GS_TAKESHOT:
 
-      ev = an_takeshot_0(board, game);
+      ev = an_takeshot_0(ev, board, game);
+
+    break;
+
+    case GS_STANDBY:
+    
+      ev = an_standby_0(ev, board, game);
 
     break;
     
     default:
-        ev = EV_NOTHING;
+        ;
     break;
     }
 
@@ -74,7 +114,7 @@ Event Animation::run(GameState gs, Board board, GameLogic game)
 }
 
 
-Event Animation::an_boot_0(Board board, GameLogic game) 
+Event Animation::an_boot_0(Event ev, Board board, GameLogic game) 
 {
     static float playerPosOld = {0.0f};
     float delta = game.playerPos - playerPosOld;
@@ -90,18 +130,16 @@ Event Animation::an_boot_0(Board board, GameLogic game)
         rgb b = Tools::hsv2rgb(a);
         rgbBuffer0[n] = b; 
     }
+    
+    if (((a.v <= 0.0f || abs(delta) > 2 ) && t > 100))
+    {
+      ev = EV_ANIMATION_END;
+    }
 
-    if ((a.v <= 0.0f || abs(delta) > 2 ) && t > 100)
-    {
-      return EV_ANIMATION_END;
-    }
-    else
-    {
-      return EV_NOTHING;
-    }
+    return ev;
 }
 
-Event Animation::an_ready_0(Board board, GameLogic game)
+Event Animation::an_ready_0(Event ev, Board board, GameLogic game)
 {
   clrRgbBuffer0();
   
@@ -138,7 +176,7 @@ Event Animation::an_ready_0(Board board, GameLogic game)
   }
 
   // Update Position
-  posSmooth += wrapf(0.01f * (speed + delta + autoDrift), NUMPIXELS);
+  posSmooth += wrapf(0.004f * (speed + delta + autoDrift), NUMPIXELS);
 
   // Detect Spin Direction 
   if (delta != 0)
@@ -164,7 +202,7 @@ Event Animation::an_ready_0(Board board, GameLogic game)
     { 
       if(game.holders[n] != 0)
       {
-      rgbBuffer0[2*n + 1] =  Tools::rgbMul(game.playerColors[game.holders[n]-1], 0.1);
+      rgbBuffer0[2*n + 1] =  Tools::rgbMul(playerColors[game.holders[n]-1], 0.1);
       }  
     }
   }
@@ -173,25 +211,33 @@ Event Animation::an_ready_0(Board board, GameLogic game)
   static float width = 1.0f;
   width =  _max(_min(width + (0.1*(autoDrift-0.5f)) , 5.0f), 1.0f);
   float fadeFac =  min(1.0f,((float)t)/50.0f);
-  draw(pos- (width/2) , width, Tools::rgbMul(game.playerColors[game.activePlayer], fadeFac));
+  draw(pos- (width/2) , width, Tools::rgbMul(playerColors[game.activePlayer], fadeFac));
  
   playerPosOld = game.playerPos;
-
+  
+  // Count short presses
+  static int pressCntr = 0;
+  if (EV_INPUT_BTN)
+  {
+    pressCntr += 1;
+  }
+  
   // Trigger Spin
-  if ((abs(speed) >  170.0f ) && t>5)
+  if ((abs(speed) >   170.0f ) && t>5)
   {
     speed = 0.0f;
-    return EV_SPIN_TRIGGER;
-
+    ev = EV_SPIN_TRIGGER;
   }
-  else
+  if (pressCntr > 5)
   {
-    return EV_NOTHING;
+    ev = EV_ANIMATION_END;
   }
+  
+  return ev;
 }
 
 
-Event Animation::an_spinning_0(Board board, GameLogic game)
+Event Animation::an_spinning_0(Event ev, Board board, GameLogic game)
 {
   clrRgbBuffer0();
  
@@ -202,7 +248,7 @@ Event Animation::an_spinning_0(Board board, GameLogic game)
   float a[MAXWINS]; // calculatet acceleration
   static float p[MAXWINS];  // positions
   static float v[MAXWINS]; // speeds
-  bool visible[MAXWINS];
+  static bool visible[MAXWINS] = {false};
 
   float width = 1.0f; // width of ball
 
@@ -273,19 +319,20 @@ Event Animation::an_spinning_0(Board board, GameLogic game)
       visible[0] = true;
       if (v[0] < v0 / 3)
       {
-        col = game.playerColors[pl];
-        for (int n = 0; n < MAXWINS; n++)
+        col = playerColors[pl];
+        
+        
+        if ((abs(p[i] - p[0]) < 1) && !visible[i])
         {
-          if ((abs(p[n] - p[0]) < 1) && (abs(v[n] - v[0]) < 1))
-          {
-            visible[n] = true;
-          }
+          visible[i] = true;
         }
+        
       }
       else
       {
-        col = game.playerColors[game.activePlayer];
+        col = playerColors[game.activePlayer];
       }
+      
 
       // If only others need to drink, flash rainbow colors
       // at start of split
@@ -298,6 +345,7 @@ Event Animation::an_spinning_0(Board board, GameLogic game)
         col = Tools::hsv2rgb(a);
       }
      
+
       if (visible[i])
       {
         draw(p[i], width + (v[i] * 0.3f), col);
@@ -320,16 +368,14 @@ Event Animation::an_spinning_0(Board board, GameLogic game)
   // End animation
   if (done && t > 5)
   { 
-    return EV_ANIMATION_END;
+    ev =  EV_ANIMATION_END;
   }
-  else 
-  {
-    return EV_NOTHING;
-  }
+
+  return ev;
 }
 
 
-Event Animation::an_takeshot_0(Board board, GameLogic game)
+Event Animation::an_takeshot_0(Event ev, Board board, GameLogic game)
 {
   clrRgbBuffer0();
 
@@ -344,7 +390,7 @@ Event Animation::an_takeshot_0(Board board, GameLogic game)
     for (int wn=0; wn<game.nWins[pl]; wn++)
     {
       winPixel = 2*game.wins[pl][wn] + 1;
-      draw(winPixel - (width/2) + 0.5, width, Tools::rgbMul(game.playerColors[pl], fadeFac));
+      draw(winPixel - (width/2) + 0.5, width, Tools::rgbMul(playerColors[pl], fadeFac));
     }
   }
   
@@ -356,23 +402,29 @@ Event Animation::an_takeshot_0(Board board, GameLogic game)
   // Trigger end of animation
   if ((abs(delta) > 1 && t > 1) || t > fadeDelay+fadeDur)
   {
-    return EV_SHOT_TAKEN;
+    ev = EV_SHOT_TAKEN;
   }
-  else
-  {
-    return EV_NOTHING;
-  }
+  
+  return ev;
 }
 
 
- Event Animation::an_playercount_0(Board board, GameLogic game)
+ Event Animation::an_playercount_0(Event ev, Board board, GameLogic game)
  {
     clrRgbBuffer0();
 
-    static float pos[MAXPLAYERS + 1] = {0.0f};
+    static float pos[MAXPLAYERS + 1];
+    if (t == 0)
+    {
+      for (int n = 1; n < MAXPLAYERS; n++)
+      {
+        pos[n] = 0.0f;
+      }
+    }
+
     pos[0] = 0.0f;
     pos[MAXPLAYERS] = NUMPIXELS;
-    static float old = 0;
+
     for (int i = 1; i <= MAXPLAYERS; i++)
     {
       float left = (pos[i + 1] - pos[i]);
@@ -388,14 +440,63 @@ Event Animation::an_takeshot_0(Board board, GameLogic game)
         pos[i] += 0.05f * left * game.nPlayers; 
         
       }
-      draw(pos[i]-right, right , game.playerColors[i-1]);
-
+      float fadeFac = fade(10, 50, 0.0f, 1.0f) * fade(10, 50, 0.0f, 1.0f);
+      draw((pos[i]-right), right  * fadeFac, playerColors[i-1]);
     }
 
+    
 
-    return EV_NOTHING;
+    flipRgbBuffer0();
+
+    return ev;
  }
 
+
+Event Animation::an_playercolor_0(Event ev, Board board, GameLogic game)
+{
+  clrRgbBuffer0();
+  static float playerPosOld = {0.0f};
+  static int playerIndex = 0; // Player whos color is editet
+
+  if (t == 0)
+  {
+    playerIndex = 0;
+    playerPosOld = game.playerPos;
+  }
+
+  
+  // Delta of Rotary Encoder Pos
+  float delta = game.playerPos - playerPosOld;
+  playerPosOld = game.playerPos;
+
+  hsv playerColorHSV = Tools::rgb2hsv(playerColors[playerIndex]);
+  playerColorHSV.h = wrapf(playerColorHSV.h + 0.1 * delta, 360.0f);
+  playerColors[playerIndex] = Tools::hsv2rgb(playerColorHSV);
+ 
+
+  for (int n = 0; n < NUMPIXELS - (2*(playerIndex+1)); n++)
+  {
+    rgbBuffer0[n] = playerColors[playerIndex];
+  }
+
+  if (ev == EV_INPUT_BTN && playerIndex < game.nPlayers - 1)
+  {
+    playerIndex += 1;
+  }
+  else if (ev == EV_INPUT_BTN)
+  {
+    ev = EV_ANIMATION_END;
+  }
+
+  return ev;
+}
+
+Event Animation::an_standby_0(Event ev, Board board, GameLogic game)
+{
+  clrRgbBuffer0();
+
+  return ev;
+}
 
 rgb Animation::colorFraction(rgb color, float fraction)
 {
@@ -532,4 +633,14 @@ void Animation::clrRgbBuffer0()
         rgbBuffer0[n].g = 0;
         rgbBuffer0[n].b = 0;
     }
+}
+
+void Animation::flipRgbBuffer0()
+{
+  for (int n = 0; n < NUMPIXELS / 2; n++)
+  {
+    rgb temp = rgbBuffer0[n];
+    rgbBuffer0[n] = rgbBuffer0[NUMPIXELS - n - 1];
+    rgbBuffer0[NUMPIXELS - n - 1] = temp;
+  }
 }

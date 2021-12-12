@@ -6,33 +6,18 @@
 GameLogic::GameLogic() {
 }
 
-Event GameLogic::update(Board board, Event ev) {
+Event GameLogic::update(Board board, GameState gs, Event ev) {
     
     playerPos = playerPos + (float)board.rotDiff;
 
+    // Trigger Ball Spinning
     if(ev == EV_SPIN_TRIGGER)
     {
         spin();
     }
 
-    if (ev == EV_INPUT_LEFT)
-    {
-        if (nPlayers > 1)
-        {
-             nPlayers  -= 1;
-        }
-        Serial.println(nPlayers);
-    }
-
-    if (ev == EV_INPUT_RIGHT)
-    {
-        if (nPlayers < MAXPLAYERS)
-        {
-             nPlayers  += 1;
-        }
-        Serial.println(nPlayers);
-    }
-
+    // When Shot Taken, check if game is over then reset
+    // if not next Player active
     if (ev == EV_SHOT_TAKEN)
     {
         // Reset when all shots taken
@@ -56,44 +41,36 @@ Event GameLogic::update(Board board, Event ev) {
         }
     }
 
+    // In Player Selection State Update nPlayers by Turning Encoder
+    if (gs == GS_PLAYERCOUNT_SELECT)
+    {
+        if ((ev == EV_INPUT_RIGHT) && (nPlayers > 1))
+        {
+           nPlayers  -= 1;
+        }
+
+        if ((ev == EV_INPUT_LEFT) && (nPlayers < MAXPLAYERS))
+        {
+            nPlayers  += 1;
+        }
+    }
+
     return ev;
 }
 
 void GameLogic::setupGame()
 {
+    #if DEBUG == 1
+        Serial.println("New Game Startet");
+    #endif
+
     // Reset Holders satate
     for (int n = 0; n < NUMSHOTS; n++)
     {
         holders[n] = false;
     }
-
-    // Set Player Colors
-    #if MAXPLAYERS >= 1
-        playerColors[0] = Tools::RGB(0.0f, 0.1f, 0.7f);
-    #endif
-    #if MAXPLAYERS >= 2
-        playerColors[1] = Tools::RGB(0.1f, 0.7f, 0.1f);
-    #endif
-    #if MAXPLAYERS >= 3
-        playerColors[2] = Tools::RGB(0.7f, 0.1f, 0.0f);
-    #endif
-    #if MAXPLAYERS >= 4
-        playerColors[3] = Tools::RGB(1.0f, 0.0f, 1.0f);
-    #endif
-    #if MAXPLAYERS >= 5
-        playerColors[4] = Tools::RGB(1.0f, 1.0f, 0.0f);
-    #endif
-    #if MAXPLAYERS >= 6
-        playerColors[5] = Tools::RGB(0.4f, 0.6f, 0.1f);
-    #endif
-    #if MAXPLAYERS >= 7
-        playerColors[6] = Tools::RGB(0.0f, 0.9f, 0.7f);
-    #endif
-    #if MAXPLAYERS >= 8
-        playerColors[7] = Tools::RGB(1.0f, 1.0f, 0.7f);
-    #endif
     
-    nPlayers = 2;
+    nPlayers = 3;
     activePlayer = 0;
 }
 
@@ -101,6 +78,7 @@ void GameLogic::nextPlayer()
 {
     activePlayer = (activePlayer + 1) % nPlayers;
 }
+
 
 void GameLogic::spin()
 {
@@ -185,7 +163,7 @@ int GameLogic::getRandomPos()
      // Select Random free Poisition
     static unsigned long seed = 0;
     seed += 100;
-    srand(millis() + seed); // Seed
+    srand((unsigned int)esp_timer_get_time() + seed); // Seed
     float rndVar = (float)(rand() / (float)RAND_MAX);
     int winIndex = (int)(rndVar * (NUMSHOTS)) ; 
     for(int n=0; n< NUMSHOTS; n++)

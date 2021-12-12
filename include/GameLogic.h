@@ -14,11 +14,12 @@ class GameLogic {
     GameLogic();
     
     void setupGame();
-    Event update(Board board, Event ev);
+    Event update(Board board, GameState gs, Event ev);
     
     void takeShot();
 
     void nextPlayer();
+    void setPlayerColor(int n, rgb color);
 
     void spin();
 
@@ -26,8 +27,6 @@ class GameLogic {
     void spin_std(int n); // You take n
 
     float playerPos; // Rotary encoder position 
-    
-    rgb playerColors[MAXPLAYERS]; 
     
     int nPlayers = 4;
     int activePlayer = 0;

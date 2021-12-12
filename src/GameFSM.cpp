@@ -18,7 +18,7 @@ GameState GameFSM::run(Event ev)
       // State Bootup Animation
       if (ev == EV_ANIMATION_END) 
       {
-        _nextState = GS_PLAYERCOUNT_SELECT;
+        _nextState = GS_READY;
       }  
       break;
   
@@ -31,6 +31,10 @@ GameState GameFSM::run(Event ev)
       else if (ev == EV_INPUT_BTN_LONG) 
       {
         _nextState = GS_PLAYERCOUNT_SELECT;
+      }
+      else if (ev == EV_ANIMATION_END)
+      {
+      // _nextState = GS_STANDBY; 
       }
       
     break;
@@ -53,6 +57,10 @@ GameState GameFSM::run(Event ev)
       {
         _nextState = GS_BOOT;
       }
+      else if (ev == EV_INPUT_BTN_LONG)
+      {
+        _nextState = GS_PLAYERCOUNT_SELECT;
+      }
     break;
 
     case GS_PLAYERCOUNT_SELECT:
@@ -60,6 +68,10 @@ GameState GameFSM::run(Event ev)
       if (ev == EV_INPUT_BTN_LONG)
       {
         _nextState = GS_READY;
+      }
+      else if (ev == EV_INPUT_BTN)
+      {
+        _nextState = GS_PLAYERCOLORS;
       }
     break;
 
@@ -69,7 +81,20 @@ GameState GameFSM::run(Event ev)
       {
         _nextState = GS_READY;
       }
+      if (ev == EV_ANIMATION_END)
+      {
+        _nextState = GS_READY;
+      }
     break;
+
+      case GS_STANDBY:
+      // State PLayer Select Colors
+      if (ev == EV_INPUT_BTN_LONG)
+      {
+        _nextState = GS_READY;
+      }
+    break;
+
   } 
 
   

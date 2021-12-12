@@ -9,7 +9,8 @@ enum GameState {
   GS_READY,
   GS_SPINNING,
   GS_TAKESHOT,
-  GS_PLAYERCOLORS
+  GS_PLAYERCOLORS,
+  GS_STANDBY
 };
 
 enum Event {

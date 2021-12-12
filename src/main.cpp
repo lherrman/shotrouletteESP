@@ -20,9 +20,10 @@ uint64_t t = 0;
 
 void setup() {
   Serial.begin(115200);
-  game.setupGame();
   board.init();
   board.startOTA();
+  game.setupGame();
+  animator.init();
 }
 
 
@@ -35,23 +36,16 @@ void loop(){
   ev = board.updateInputs();
 
   // Draw
-  if (Tools::capFPS(t, FPSTARGET)) {
+  if (Tools::capFPS(t, FPSTARGET) || ev) {
 
-    ret = animator.run(gs, board, game);
-    if (ret) {ev = ret;}
+    ev = animator.run(ev, gs, board, game);
 
     board.updatePixels(animator.rgbBuffer0);
   }
 
-  if (ev)
-  {
-    Serial.println(ev);
-  }
-
   //Update game logic
-  ev = game.update(board, ev);
+  ev = game.update(board, gs, ev);
  
-
   // Update State Machine
   gs = fsm.run(ev);
 

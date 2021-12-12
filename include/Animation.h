@@ -13,20 +13,22 @@
 class Animation {
   public:
     Animation();
-    Event run(GameState gs, Board board, GameLogic game);
+    Event run(Event ev, GameState gs, Board board, GameLogic game);
     void init();
     void clrRgbBuffer0();
-
     rgb rgbBuffer0[NUMPIXELS];
+    rgb playerColors[MAXPLAYERS]; 
 
     private:
 
     // Animations
-    Event an_boot_0(Board board, GameLogic game);
-    Event an_ready_0(Board board, GameLogic game);
-    Event an_spinning_0(Board board, GameLogic game);
-    Event an_takeshot_0(Board board, GameLogic game);
-    Event an_playercount_0(Board board, GameLogic game);
+    Event an_boot_0(Event ev,Board board, GameLogic game);
+    Event an_ready_0(Event ev,Board board, GameLogic game);
+    Event an_spinning_0(Event ev,Board board, GameLogic game);
+    Event an_takeshot_0(Event ev,Board board, GameLogic game);
+    Event an_playercount_0(Event ev,Board board, GameLogic game);
+    Event an_playercolor_0(Event ev, Board board, GameLogic game);
+    Event an_standby_0(Event ev, Board board, GameLogic game);
 
     int wrap(int in, int n); 
     float wrap360(float in); 
@@ -40,7 +42,8 @@ class Animation {
   
     float cap(float in);
 
-    rgb playerColors[MAXPLAYERS];
+    void flipRgbBuffer0();
+
     int spinDir;
 
     unsigned long t;
