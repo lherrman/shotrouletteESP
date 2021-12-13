@@ -32,11 +32,6 @@ GameState GameFSM::run(Event ev)
       {
         _nextState = GS_PLAYERCOUNT_SELECT;
       }
-      else if (ev == EV_ANIMATION_END)
-      {
-      // _nextState = GS_STANDBY; 
-      }
-      
     break;
 
     case GS_SPINNING:
@@ -81,20 +76,11 @@ GameState GameFSM::run(Event ev)
       {
         _nextState = GS_READY;
       }
-      if (ev == EV_ANIMATION_END)
+      else if (ev == EV_ANIMATION_END)
       {
         _nextState = GS_READY;
       }
     break;
-
-      case GS_STANDBY:
-      // State PLayer Select Colors
-      if (ev == EV_INPUT_BTN_LONG)
-      {
-        _nextState = GS_READY;
-      }
-    break;
-
   } 
 
   

@@ -19,6 +19,14 @@ Board::Board(){
   
 void Board::startOTA()
 {
+ 
+  setCpuFrequencyMhz(240);
+  WiFi.disconnect(false);  // Reconnect the network
+  WiFi.mode(WIFI_STA);    // Switch WiFi off
+
+  delay(1000);
+
+  otaActive = true;
   // Show status Blue
   rgb rgbBuffer[NUMPIXELS];
   for (int n=0; n < NUMPIXELS; n++)
@@ -37,7 +45,6 @@ void Board::startOTA()
     delay(5000);
     ESP.restart();
   }
-
 
 
   // ArduinoOTA.setPort(3232);
@@ -66,7 +73,16 @@ void Board::startOTA()
     .onEnd([]() {
       Serial.println("\nEnd");
     })
-    .onProgress([](unsigned int progress, unsigned int total) {
+    .onProgress([=](unsigned int progress, unsigned int total) {
+
+      // Show Progress on Leds
+      rgb rgbBuffer[NUMPIXELS] = {0.0f};
+      for (int n = 0; n < (progress / (total / NUMPIXELS)); n++)
+      {
+        rgbBuffer[n] = Tools::RGB(0.0f, 0.5f, 0.0f); 
+      }
+      updatePixels(rgbBuffer);
+
       Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
       Serial.println();
     })
@@ -89,9 +105,26 @@ void Board::startOTA()
 
 void Board::init()
 {
+
+  //esp_sleep_enable_ext0_wakeup(GPIO_NUM_12 , 1);
+  //esp_sleep_enable_ext0_wakeup(GPIO_NUM_14 , 1);
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_23 , 1);
+  esp_sleep_enable_timer_wakeup(1000000 / FPSTARGET);
+
+  // Turn off unneded stuff to safe energy
+  // Stop Bluetooth
+  btStop();
+
+  // Disable Wifi
+  WiFi.disconnect(true);  // Disconnect from the network
+  WiFi.mode(WIFI_OFF);    // Switch WiFi off
+ 
+ // Turn Down CPU Frequency
+ setCpuFrequencyMhz(80);
+
   neoPixels.begin();
 
-    // Setup Rotarry Encoder
+  // Setup Rotarry Encoder
   ESP32Encoder::useInternalWeakPullResistors=UP;
 	encoder.attachHalfQuad(PINROTENC0, PINROTENC1);
 
@@ -122,6 +155,30 @@ void Board::updatePixels(rgb pxls[NUMPIXELS])
 }
 
 
+Event Board::update()
+{
+
+  Event ev = EV_NOTHING;
+
+  ev = updateInputs();
+
+   if (lowPowerMode && !otaActive)
+  {
+    esp_light_sleep_start();
+  }
+
+  // Start OTA Update Server on very long press
+  if (ev == EV_INPUT_BTN_SUPERLONG && !otaActive)
+  {
+     startOTA();
+  }
+
+  // Activate Low Power Mode when Rotary Encoder is not moved
+  lowPowerMode = (rotSpeed == 0);
+
+  return ev;
+}
+
 Event Board::updateInputs()
 {
   ArduinoOTA.handle();
@@ -132,6 +189,7 @@ Event Board::updateInputs()
   // Get Rot Encoder Diff
   static int32_t encoderCountOld = 0;
   int32_t count = (int32_t)encoder.getCount();
+
   rotDiff = count - encoderCountOld;
   encoderCountOld = count;
 
@@ -172,20 +230,34 @@ Event Board::updateInputs()
   // User Button
   static float sensorAverage = 20.0f;
   uint16_t sensorValue = touchRead(PINUSERBUTTON0);
-  sensorAverage = 0.0002 * sensorValue + 0.9998 * sensorAverage;
+  sensorAverage = 0.0001 * sensorValue + 0.9999 * sensorAverage;
 
-  int threshold = (int)(0.80 * sensorAverage);
+  int threshold = (int)(0.90 * sensorAverage);
  
   bool btn0 = sensorValue < threshold;
   int tShort = 20; // Time for Short Press
   int tLong = 1000; // Time for Long Press
-  static int tPress = 0;
+  int tSuperLong = 4000; // Time for very long Press 
+  static unsigned long tPress = 0;
+  static unsigned long tPressSuperLong = 0;
+  static unsigned long tOld = 0;
   static bool pressed = false; // Button already was pressed
 
+  int delta =  (int)(millis() - tOld);
 
   if (btn0)
   {
-    tPress += 1;
+    tPress += delta;
+    tPressSuperLong += delta;
+
+    if (tPressSuperLong > tSuperLong)
+    {
+      ev = EV_INPUT_BTN_SUPERLONG;
+      Serial.println("BTN SUPER LONG");
+      tPressSuperLong = 0;
+      pressed = true;
+    }
+
     if ((tPress > tLong) && !pressed)
     {
       ev = EV_INPUT_BTN_LONG;
@@ -203,9 +275,12 @@ Event Board::updateInputs()
   else
   {
     tPress = 0;
+    tPressSuperLong = 0;
     pressed = false;
   }
   
+
+  tOld = millis();
   return ev;
 }
   

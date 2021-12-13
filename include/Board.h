@@ -18,6 +18,7 @@ class Board {
     Board();
     void init();
     void startOTA();
+    Event update();
     Event updateInputs();
     void updatePixels(rgb pxls[NUMPIXELS]);
     bool sensors[NUMSHOTS] = {false};
@@ -25,10 +26,12 @@ class Board {
 
     int rotDiff = 0;
     float rotSpeed = 0.0f;
-
+    bool otaActive = false;
+    bool lowPowerMode = true;
+    
   private:
    uint8_t gammaLUT[256];
-
+  
 };
 
 #endif

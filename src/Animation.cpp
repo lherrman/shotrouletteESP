@@ -215,22 +215,12 @@ Event Animation::an_ready_0(Event ev, Board board, GameLogic game)
  
   playerPosOld = game.playerPos;
   
-  // Count short presses
-  static int pressCntr = 0;
-  if (EV_INPUT_BTN)
-  {
-    pressCntr += 1;
-  }
   
   // Trigger Spin
-  if ((abs(speed) >   170.0f ) && t>5)
+  if ((abs(speed) >   300.0f ) && t>5)
   {
     speed = 0.0f;
     ev = EV_SPIN_TRIGGER;
-  }
-  if (pressCntr > 5)
-  {
-    ev = EV_ANIMATION_END;
   }
   
   return ev;
@@ -242,7 +232,7 @@ Event Animation::an_spinning_0(Event ev, Board board, GameLogic game)
   clrRgbBuffer0();
  
   float v0 = 2.0f;
-  int n = 20;
+  int n = 30;
   int winPixels[MAXWINS];
   float s[MAXWINS]; // Starting dists to win pos
   float a[MAXWINS]; // calculatet acceleration
@@ -479,6 +469,13 @@ Event Animation::an_playercolor_0(Event ev, Board board, GameLogic game)
     rgbBuffer0[n] = playerColors[playerIndex];
   }
 
+  // Standby Mode
+  /*
+  if (playerIndex == game.nPlayers)
+  {4
+    clrRgbBuffer0();
+  }
+  */
   if (ev == EV_INPUT_BTN && playerIndex < game.nPlayers - 1)
   {
     playerIndex += 1;
