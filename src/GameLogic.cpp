@@ -67,10 +67,14 @@ void GameLogic::setupGame()
     // Reset Holders satate
     for (int n = 0; n < NUMSHOTS; n++)
     {
-        holders[n] = false;
+        holders[n] = 0;
     }
     
-    nPlayers = 3;
+    for (int n = 0; n < MAXPLAYERS; n++)
+    {
+        nWins[n] = 0;
+    }
+
     activePlayer = 0;
 }
 

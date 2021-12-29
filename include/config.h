@@ -5,7 +5,7 @@
 #define NUMPIXELS 32
 #define NUMSHOTS 16
 
-#define MAXPLAYERS 5
+#define MAXPLAYERS 6
 
 #define MAXWINS 6
 

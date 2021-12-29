@@ -28,9 +28,9 @@ class GameLogic {
 
     float playerPos; // Rotary encoder position 
     
-    int nPlayers = 4;
+    int nPlayers = 3;
     int activePlayer = 0;
-    int wins[MAXPLAYERS][4]; // Holders index which shots to take for each Player in current Round
+    int wins[MAXPLAYERS][MAXWINS]; // Holders index which shots to take for each Player in current Round
     char nWins[MAXPLAYERS]; // Number of won shot this round for each player
     char holders[NUMSHOTS]; // Tells who won which shot
 

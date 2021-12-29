@@ -196,13 +196,19 @@ Event Animation::an_ready_0(Event ev, Board board, GameLogic game)
 
 
   // Draw playercolors of taken shotglasses
-  if (autoDrift != 0)
+  static bool showTakenShots = false;
+  if (ev == EV_INPUT_BTN)
   {
-    for (int n=0; n<NUMSHOTS-1; n++)
+    showTakenShots = !showTakenShots;
+  }
+
+  if (showTakenShots)
+  {
+    for (int n=0; n<NUMSHOTS; n++)
     { 
       if(game.holders[n] != 0)
       {
-      rgbBuffer0[2*n + 1] =  Tools::rgbMul(playerColors[game.holders[n]-1], 0.1);
+      rgbBuffer0[2*n + 1] =  Tools::rgbMul(playerColors[game.holders[n]-1], 0.4);
       }  
     }
   }
@@ -231,15 +237,29 @@ Event Animation::an_spinning_0(Event ev, Board board, GameLogic game)
 {
   clrRgbBuffer0();
  
-  float v0 = 2.0f;
-  int n = 30;
-  int winPixels[MAXWINS];
-  float s[MAXWINS]; // Starting dists to win pos
-  float a[MAXWINS]; // calculatet acceleration
-  static float p[MAXWINS];  // positions
-  static float v[MAXWINS]; // speeds
+  float v0 = 2.0f;          // Start Speed
+  int winPixels[MAXWINS];   // Winning Pixel Indices
+  float s[MAXWINS];         // Starting dists to win pos
+  float a[MAXWINS];         // Calculatet acceleration
+  static float p[MAXWINS];  // Positions
+  static float v[MAXWINS];  // Speeds
   static bool visible[MAXWINS] = {false};
 
+  // Number of turns depending on How many Wins
+  int n;
+  if (game.nWins[game.activePlayer] == 0) // Others Drink
+  {
+     n = 26;
+  }
+  else if (game.nWins[game.activePlayer] == 1) // Standard
+  {
+    n = 13;
+  }
+  else
+  {
+    n = 16 + (2 * game.nWins[game.activePlayer]);
+  }
+  
   float width = 1.0f; // width of ball
 
   int i = 0; // Array Index
@@ -247,11 +267,11 @@ Event Animation::an_spinning_0(Event ev, Board board, GameLogic game)
   // Initialize ball variables
   if (t == 0)
   {
-    for (int n = 0; n < MAXWINS; n++)
+    for (int x = 0; x < MAXWINS; x++)
     {
-      v[n] = 0.0f;
-      p[n] = 0.0f;
-      visible[n] = false;
+      v[x] = 0.0f;
+      p[x] = 0.0f;
+      visible[x] = false;
     }
     v[0] = v0;
   }
@@ -338,7 +358,7 @@ Event Animation::an_spinning_0(Event ev, Board board, GameLogic game)
 
       if (visible[i])
       {
-        draw(p[i], width + (v[i] * 0.3f), col);
+        draw(p[i], width + (v[i] * 0.03f), col);
       }
 
       i += 1;
@@ -395,6 +415,7 @@ Event Animation::an_takeshot_0(Event ev, Board board, GameLogic game)
     ev = EV_SHOT_TAKEN;
   }
   
+
   return ev;
 }
 

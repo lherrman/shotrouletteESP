@@ -162,7 +162,7 @@ Event Board::update()
 
   ev = updateInputs();
 
-   if (lowPowerMode && !otaActive)
+  if (lowPowerMode && !otaActive)
   {
     esp_light_sleep_start();
   }
@@ -228,7 +228,7 @@ Event Board::updateInputs()
   //Serial.println(touchRead(PINUSERBUTTON0));
 
   // User Button
-  static float sensorAverage = 20.0f;
+  static float sensorAverage = touchRead(PINUSERBUTTON0);
   uint16_t sensorValue = touchRead(PINUSERBUTTON0);
   sensorAverage = 0.0001 * sensorValue + 0.9999 * sensorAverage;
 
