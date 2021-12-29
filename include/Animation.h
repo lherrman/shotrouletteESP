@@ -19,7 +19,7 @@ class Animation {
     rgb rgbBuffer0[NUMPIXELS];
     rgb playerColors[MAXPLAYERS]; 
 
-    private:
+  private:
 
     // Animations
     Event an_boot_0(Event ev,Board board, GameLogic game);
@@ -29,6 +29,8 @@ class Animation {
     Event an_playercount_0(Event ev,Board board, GameLogic game);
     Event an_playercolor_0(Event ev, Board board, GameLogic game);
     Event an_standby_0(Event ev, Board board, GameLogic game);
+    Event an_roundover_0(Event ev, Board board, GameLogic game);
+
 
     int wrap(int in, int n); 
     float wrap360(float in); 

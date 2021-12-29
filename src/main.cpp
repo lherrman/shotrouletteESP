@@ -46,17 +46,18 @@ void loop(){
   // Update inputs
   ev = board.update();
 
+
   // Draw
   if ((Tools::capFPS(t, FPSTARGET) || ev) || board.lowPowerMode) {
-
+    
     ev = animator.run(ev, gs, board, game);
 
     board.updatePixels(animator.rgbBuffer0);
+
   }
 
   //Update game logic
   ev = game.update(board, gs, ev);
-  
   
   // Update State Machine
   gs = fsm.run(ev);

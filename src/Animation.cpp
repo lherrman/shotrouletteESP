@@ -17,22 +17,22 @@ void Animation::init()
 {
  // Initial Player Colors
     #if MAXPLAYERS >= 1
-        playerColors[0] = Tools::RGB(0.0f, 0.1f, 0.7f);
+        playerColors[0] = Tools::RGB(0.0f, 0.2f, 1.0f);
     #endif
     #if MAXPLAYERS >= 2
         playerColors[1] = Tools::RGB(0.1f, 0.7f, 0.1f);
     #endif
     #if MAXPLAYERS >= 3
-        playerColors[2] = Tools::RGB(0.7f, 0.1f, 0.0f);
+        playerColors[2] = Tools::RGB(0.8f, 0.1f, 0.0f);
     #endif
     #if MAXPLAYERS >= 4
-        playerColors[3] = Tools::RGB(1.0f, 0.0f, 1.0f);
+        playerColors[3] = Tools::RGB(1.0f, 0.0f, 0.5f);
     #endif
     #if MAXPLAYERS >= 5
-        playerColors[4] = Tools::RGB(1.0f, 1.0f, 0.0f);
+        playerColors[4] = Tools::RGB(0.88f, 1.0f, 0.0f);
     #endif
     #if MAXPLAYERS >= 6
-        playerColors[5] = Tools::RGB(0.4f, 0.6f, 0.1f);
+        playerColors[5] = Tools::RGB(0.0f, 1.0f, 0.5f);
     #endif
     #if MAXPLAYERS >= 7
         playerColors[6] = Tools::RGB(0.0f, 0.9f, 0.7f);
@@ -105,6 +105,12 @@ Event Animation::run(Event ev, GameState gs, Board board, GameLogic game)
 
     break;
     
+    case GS_ROUNDOVER:
+
+      ev = an_roundover_0(ev, board, game);
+
+    break;
+
     default:
         ;
     break;
@@ -249,17 +255,15 @@ Event Animation::an_spinning_0(Event ev, Board board, GameLogic game)
   int n;
   if (game.nWins[game.activePlayer] == 0) // Others Drink
   {
-     n = 26;
-  }
-  else if (game.nWins[game.activePlayer] == 1) // Standard
-  {
-    n = 13;
+     n = 22;
   }
   else
   {
-    n = 16 + (2 * game.nWins[game.activePlayer]);
+    n = 13 + (2 * game.nWins[game.activePlayer]);
   }
   
+  n = 2;
+
   float width = 1.0f; // width of ball
 
   int i = 0; // Array Index
@@ -365,6 +369,8 @@ Event Animation::an_spinning_0(Event ev, Board board, GameLogic game)
     }  
   }
 
+
+
   // Animation done when all balls stand
   bool done = true;
   for (int n = 0; n < MAXWINS; n++)
@@ -457,8 +463,6 @@ Event Animation::an_takeshot_0(Event ev, Board board, GameLogic game)
 
     
 
-    flipRgbBuffer0();
-
     return ev;
  }
 
@@ -507,6 +511,40 @@ Event Animation::an_playercolor_0(Event ev, Board board, GameLogic game)
   }
 
   return ev;
+}
+
+Event Animation::an_roundover_0(Event ev, Board board, GameLogic game)
+{
+  clrRgbBuffer0();
+  bool showTakenShots = true;
+  /*
+  for (int n=0; n<NUMPIXELS; n++)
+  { 
+    if(game.holders[n/2] != 0)
+    {
+    rgbBuffer0[n] =  Tools::rgbMul(playerColors[game.holders[n/2]-1], 1.0f);
+    }  
+  }
+  */
+  for (int n=0; n<NUMSHOTS; n++)
+  { 
+    float mult = 0.5f + 0.5f * sin((((float)n / NUMSHOTS) * 6.28318 * 2) + ((float)t/40));
+
+    draw((2*n)+0.5f + (0.0*sin((float)t / 10.0f)), 2.0f, Tools::rgbMul(playerColors[game.holders[n]-1], mult));
+  }
+
+
+  
+  
+
+  if (board.rotSpeed != 0 && t > 200)
+  {
+    ev = EV_RESTART;
+  }
+
+  return ev;
+
+
 }
 
 Event Animation::an_standby_0(Event ev, Board board, GameLogic game)
@@ -652,6 +690,8 @@ void Animation::clrRgbBuffer0()
         rgbBuffer0[n].b = 0;
     }
 }
+
+
 
 void Animation::flipRgbBuffer0()
 {

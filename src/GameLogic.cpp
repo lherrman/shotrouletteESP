@@ -32,8 +32,8 @@ Event GameLogic::update(Board board, GameState gs, Event ev) {
         }
         if (rst)
         {
-            setupGame();
-            ev = EV_RESTART;
+
+            ev = EV_ROUNDISOVER;
         }
         else
         {
@@ -41,15 +41,21 @@ Event GameLogic::update(Board board, GameState gs, Event ev) {
         }
     }
 
+    // Restart Game
+    if (ev == EV_RESTART)
+    {
+        setupGame();
+    }
+
     // In Player Selection State Update nPlayers by Turning Encoder
     if (gs == GS_PLAYERCOUNT_SELECT)
     {
-        if ((ev == EV_INPUT_RIGHT) && (nPlayers > 1))
+        if ((ev == EV_INPUT_LEFT) && (nPlayers > 1))
         {
            nPlayers  -= 1;
         }
 
-        if ((ev == EV_INPUT_LEFT) && (nPlayers < MAXPLAYERS))
+        if ((ev == EV_INPUT_RIGHT) && (nPlayers < MAXPLAYERS))
         {
             nPlayers  += 1;
         }

@@ -48,9 +48,9 @@ GameState GameFSM::run(Event ev)
       {
         _nextState = GS_READY;
       }
-      else if (ev == EV_RESTART)
+      else if (ev == EV_ROUNDISOVER)
       {
-        _nextState = GS_BOOT;
+        _nextState = GS_ROUNDOVER;
       }
       else if (ev == EV_INPUT_BTN_LONG)
       {
@@ -79,6 +79,14 @@ GameState GameFSM::run(Event ev)
       else if (ev == EV_ANIMATION_END)
       {
         _nextState = GS_READY;
+      }
+    break;
+
+    case GS_ROUNDOVER:
+      // State Round is Over
+      if (ev == EV_RESTART)
+      {
+        _nextState = GS_BOOT;
       }
     break;
   } 

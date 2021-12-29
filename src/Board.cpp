@@ -106,6 +106,7 @@ void Board::startOTA()
 void Board::init()
 {
 
+
   //esp_sleep_enable_ext0_wakeup(GPIO_NUM_12 , 1);
   //esp_sleep_enable_ext0_wakeup(GPIO_NUM_14 , 1);
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_23 , 1);
@@ -119,8 +120,8 @@ void Board::init()
   WiFi.disconnect(true);  // Disconnect from the network
   WiFi.mode(WIFI_OFF);    // Switch WiFi off
  
- // Turn Down CPU Frequency
- setCpuFrequencyMhz(80);
+  // Turn Down CPU Frequency
+  setCpuFrequencyMhz(80);
 
   neoPixels.begin();
 
@@ -284,3 +285,4 @@ Event Board::updateInputs()
   return ev;
 }
   
+
