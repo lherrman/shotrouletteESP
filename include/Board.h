@@ -28,7 +28,7 @@ class Board {
     float rotSpeed = 0.0f;
     bool otaActive = false;
     bool lowPowerMode = true;
-
+  
   private:
     uint8_t gammaLUT[256];
     

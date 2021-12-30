@@ -207,17 +207,35 @@ Event Animation::an_ready_0(Event ev, Board board, GameLogic game)
   {
     showTakenShots = !showTakenShots;
   }
+  float TSBrightnessTargetHigh = 0.5f;
+  float TSBrignessTarget = (int)showTakenShots * TSBrightnessTargetHigh;;
+  static float TSBrigness = 0.0f;
+  
+  TSBrigness = 0.05 * TSBrignessTarget + 0.95 * TSBrigness;
 
-  if (showTakenShots)
+  if (TSBrigness != 0)
   {
+    // Draw Taken Shots with Player Colors
     for (int n=0; n<NUMSHOTS; n++)
     { 
       if(game.holders[n] != 0)
       {
-      rgbBuffer0[2*n + 1] =  Tools::rgbMul(playerColors[game.holders[n]-1], 0.4);
+      rgbBuffer0[2*n + 1] =  Tools::rgbMul(playerColors[game.holders[n]-1], TSBrigness);
       }  
     }
+
+    // Blink last wins
+    for (int pl = 0; pl < MAXPLAYERS; pl++)
+    {
+      for (int wn=0; wn<game.nWins[pl]; wn++)
+      {
+        int winPixel = 2*game.wins[pl][wn] + 1;
+        rgbBuffer0[winPixel] = Tools::rgbMul(rgbBuffer0[winPixel], 0.6f + (0.4 * cos((t)/40.0f)));
+      }
+    }
+
   }
+
 
   // Draw ball
   static float width = 1.0f;
@@ -232,6 +250,8 @@ Event Animation::an_ready_0(Event ev, Board board, GameLogic game)
   if ((abs(speed) >   300.0f ) && t>5)
   {
     speed = 0.0f;
+    showTakenShots = false;
+    TSBrigness = 0.0f;
     ev = EV_SPIN_TRIGGER;
   }
   
@@ -252,17 +272,27 @@ Event Animation::an_spinning_0(Event ev, Board board, GameLogic game)
   static bool visible[MAXWINS] = {false};
 
   // Number of turns depending on How many Wins
-  int n;
+  // plus a Random offset
+  int n = 0;
+  int maxRndRounds = 3;
+  static int nRndRounds = 0;
+  if (t==0)
+  {
+    nRndRounds =  millis() % (maxRndRounds + 1);
+  }
+  
+ 
   if (game.nWins[game.activePlayer] == 0) // Others Drink
   {
-     n = 22;
+     n = 18;
   }
   else
   {
-    n = 13 + (2 * game.nWins[game.activePlayer]);
+    n = 8 + (2 * game.nWins[game.activePlayer]);
   }
-  
-  n = 2;
+
+  n += nRndRounds;
+ 
 
   float width = 1.0f; // width of ball
 
@@ -397,7 +427,7 @@ Event Animation::an_takeshot_0(Event ev, Board board, GameLogic game)
 
   // Draw balls
   float width = 0.6f + (0.4 * cos((t)/40.0f));
-  int fadeDelay = 1200;
+  int fadeDelay = 800;                         // Animation ends After this time
   float fadeDur = 50.0f;
   float fadeFac = min((fadeDur - max(0,((int)t-fadeDelay))) / fadeDur, 1.0f);
   int winPixel;
@@ -417,6 +447,12 @@ Event Animation::an_takeshot_0(Event ev, Board board, GameLogic game)
 
   // Trigger end of animation
   if ((abs(delta) > 1 && t > 1) || t > fadeDelay+fadeDur)
+  {
+    ev = EV_SHOT_TAKEN;
+  }
+
+  // When all shots are taken end Animation imediatly
+  if ((game.shotsTaken == NUMSHOTS) && t > 370)
   {
     ev = EV_SHOT_TAKEN;
   }
@@ -517,25 +553,14 @@ Event Animation::an_roundover_0(Event ev, Board board, GameLogic game)
 {
   clrRgbBuffer0();
   bool showTakenShots = true;
-  /*
-  for (int n=0; n<NUMPIXELS; n++)
-  { 
-    if(game.holders[n/2] != 0)
-    {
-    rgbBuffer0[n] =  Tools::rgbMul(playerColors[game.holders[n/2]-1], 1.0f);
-    }  
-  }
-  */
+
   for (int n=0; n<NUMSHOTS; n++)
   { 
-    float mult = 0.5f + 0.5f * sin((((float)n / NUMSHOTS) * 6.28318 * 2) + ((float)t/40));
+    float mult = (0.45f + 0.55f * sin((((float)n / NUMSHOTS) * 9.424777f * 2) + ((float)t / 40))) * fade(0, 20,0.0f, 1.0f) ;
 
     draw((2*n)+0.5f + (0.0*sin((float)t / 10.0f)), 2.0f, Tools::rgbMul(playerColors[game.holders[n]-1], mult));
   }
 
-
-  
-  
 
   if (board.rotSpeed != 0 && t > 200)
   {

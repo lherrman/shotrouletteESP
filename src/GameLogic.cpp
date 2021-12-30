@@ -20,6 +20,7 @@ Event GameLogic::update(Board board, GameState gs, Event ev) {
     // if not next Player active
     if (ev == EV_SHOT_TAKEN)
     {
+        /*
         // Reset when all shots taken
         bool rst = true;
         for (int n = 0; n < NUMSHOTS; n++)
@@ -30,7 +31,11 @@ Event GameLogic::update(Board board, GameState gs, Event ev) {
                 break;
             }
         }
-        if (rst)
+
+        */
+       
+        // Send Round Over Event when last shots was taken
+        if (shotsTaken == NUMSHOTS)
         {
 
             ev = EV_ROUNDISOVER;
@@ -126,6 +131,18 @@ void GameLogic::spin()
     {
         spin_std(1); // You Take
     }
+
+
+    // Count total taken shots
+    shotsTaken = 0;
+    for (int c = 0; c < NUMSHOTS; c++)
+    {
+        if (holders[c] != 0)
+        {
+            shotsTaken += 1;
+        }
+    }
+
 }
 
 

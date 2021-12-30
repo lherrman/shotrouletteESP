@@ -23,16 +23,18 @@ class GameLogic {
 
     void spin();
 
-    void spin_rare0(); // Others take 1 each
+    void spin_rare0();    // Others take 1 each
     void spin_std(int n); // You take n
 
-    float playerPos; // Rotary encoder position 
+    float playerPos;        // Rotary encoder position 
     
     int nPlayers = 3;
     int activePlayer = 0;
+
     int wins[MAXPLAYERS][MAXWINS]; // Holders index which shots to take for each Player in current Round
-    char nWins[MAXPLAYERS]; // Number of won shot this round for each player
-    char holders[NUMSHOTS]; // Tells who won which shot
+    char nWins[MAXPLAYERS];        // Number of won shot this round for each player
+    char holders[NUMSHOTS];        // Tells who won which shot
+    int shotsTaken;                // Number of Shots already Taken
 
   private:
 
